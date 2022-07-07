@@ -14,6 +14,11 @@
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ObjPlain
 // 地面
 
+
+// const int MAX_MARCHING_STEPS = 16;
+// const float EPSILON = 0.001;
+// const float MAX_DIST =      999999.f;
+
 bool ObjPlane( const TRay* Ray,
                TTap* const Tap )
 {
@@ -62,7 +67,7 @@ bool ObjSpher( const  TRay* Ray0,
 
   Tap->Dis /= VecL;
   Tap->Pos = MulPos( Mov, Tap->Pos );
-  Tap->Nor = normalize( MulVec( Transpose( Inv ), Tap->Nor ) );
+  Tap->Nor = normalize( MulVec( Trans( Inv ), Tap->Nor ) );
 
   return true;  // 交差あり
 }
@@ -72,14 +77,46 @@ bool ObjSpher( const  TRay* Ray0,
 
 float GetDis( const float3 P )
 {
-
-
   return length( P ) - 1;
 }
 
+ /**
+ * Signed distance function for a sphere centered at the origin with radius r.
+ */
+float SphereSDF(float3 p, float3 c, float r) {
+  return length(p - c) - r;
+}
+
+// polynomial smooth min (k = 0.1);
+float Smin( float a, float b, float k )
+{
+  float h = clamp( 0.5f+0.5f*(b-a)/k, 0.f, 1.f );
+  return mix( b, a, h ) - k*h*(1.f-h);
+}
+
+/**
+ * Signed distance function describing the scene.
+ */
+float SceneSDF(float3 samplePoint, global TShaper* spheres) {
+  float ballRadius = 0.7f;
+  float Result = MAXFLOAT;
+
+  for (int i = 1; i < 1109; i ++) {
+      TSingleM4 M = spheres[ i ].Mov;
+      float3    C = (float3)( M._14, M._24, M._34 );
+      float     R = M._11;
+      float D = SphereSDF( samplePoint, C, R );
+      Result = Smin(Result, D, 0.1f);
+  }
+
+  return Result;
+}
+
+
+
 //------------------------------------------------------------------------------
 
-float3 GetNor( const float3 P )
+float3 GetNor( const float3 P, global TShaper* spheres )
 {
   const float3 Xd = { FLOAT_EPS2, 0, 0 };
   const float3 Yd = { 0, FLOAT_EPS2, 0 };
@@ -87,9 +124,9 @@ float3 GetNor( const float3 P )
 
   float3 Result;
 
-  Result.x = GetDis( P + Xd ) - GetDis( P - Xd );
-  Result.y = GetDis( P + Yd ) - GetDis( P - Yd );
-  Result.z = GetDis( P + Zd ) - GetDis( P - Zd );
+  Result.x = SceneSDF( P + Xd, spheres ) - SceneSDF( P - Xd, spheres );
+  Result.y = SceneSDF( P + Yd, spheres ) - SceneSDF( P - Yd, spheres );
+  Result.z = SceneSDF( P + Zd, spheres ) - SceneSDF( P - Zd, spheres );
 
   return normalize( Result );
 }
@@ -98,20 +135,22 @@ float3 GetNor( const float3 P )
 //------------------------------------------------------------------------------
 
 bool ObjField( const TRay* Ray,
-               TTap* const Tap )
+               TTap* const Tap,
+               global TShaper* Spheres
+               )
 {
   Tap->Dis = 0;
   for( int i = 0; i < 64; i++ )
   {
     Tap->Pos = Tap->Dis * Ray->Vec + Ray->Pos;
 
-    float D = fabs( GetDis( Tap->Pos ) );
+    float D = fabs( SceneSDF( Tap->Pos, Spheres ) );
 
     Tap->Dis += D;
 
     if ( D < FLOAT_EPS2 )
     {
-      Tap->Nor  = GetNor( Tap->Pos );
+      Tap->Nor  = GetNor( Tap->Pos, Spheres );
       Tap->Pos -= D * Tap->Nor;
 
       return true;  // 交差あり

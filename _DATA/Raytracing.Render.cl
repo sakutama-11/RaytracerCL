@@ -49,12 +49,14 @@ void Raytrace( TRay*  const     Ray,
 
     ///// 物体
 
-    //if ( ObjPlane( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 3 );  // 地面とレイの交差判定
+    // if ( ObjPlane( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 3 );  // 地面とレイの交差判定
 
-    for ( int i = 0; i < 100; i++ )
-    {
-      if ( ObjSpher( Ray, &Tap, Shapers[ i ].Mov ) ) CheckHit( &Hit, &Tap, 1 );  // 球体とレイの交差判定
-    }
+    // for ( int i = 0; i < 1109; i++ )
+    // {
+    //   if ( ObjSpher( Ray, &Tap, Shapers[ i ].Mov ) ) CheckHit( &Hit, &Tap, 3 );  // 球体とレイの交差判定
+    // }
+
+    if (ObjField( Ray, &Tap, Shapers)) CheckHit( &Hit, &Tap, 2 );
 
     ///// 材質
 
@@ -95,15 +97,23 @@ kernel void Render( write_only image2d_t  Imager ,
   Pix.See = read_imageui( Seeder, Pix.Pos );                       // 乱数シードを取得
   Pix.Rad = read_imagef ( Accumr, Pix.Pos );                       // ピクセル輝度を取得
 
-  Eye.Pos = (float3)( RandCirc(&Pix.See) * 0.05f, 0 );  // 視点位置
+  // Eye.Pos = (float3)( RandCirc(&Pix.See) * 0.05f, 0 );  // 視点位置
 
-  float2 A = (float2)( Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)-2,
-                       Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)-2 );
+  // float2 A = (float2)( Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)-2,
+  //                     Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)+Rand(&Pix.See)-2 );
 
-  Scr.Siz   = (float2)( 4, 3 );                                             // スクリーンのサイズ
-  Scr.Pos.x = Scr.Siz.x * ( ( Pix.Pos.x + 0.5 + A.x ) / Pix.Siz.x - 0.5 );  // スクリーン上の標本位置
-  Scr.Pos.y = Scr.Siz.y * ( 0.5 - ( Pix.Pos.y + 0.5 + A.y ) / Pix.Siz.y );
+  // Scr.Siz   = (float2)( 4, 3 );                                             // スクリーンのサイズ
+  // Scr.Pos.x = Scr.Siz.x * ( ( Pix.Pos.x + 0.5 + A.x ) / Pix.Siz.x - 0.5 );  // スクリーン上の標本位置
+  // Scr.Pos.y = Scr.Siz.y * ( 0.5 - ( Pix.Pos.y + 0.5 + A.y ) / Pix.Siz.y );
+  // Scr.Pos.z = -2;
+
+  Eye.Pos = (float3)0;  // 視点位置
+
+  Scr.Siz   = (float2)( 4, 3 );                                       // スクリーンのサイズ
+  Scr.Pos.x = Scr.Siz.x * ( ( Pix.Pos.x + 0.5 ) / Pix.Siz.x - 0.5 );  // スクリーン上の標本位置
+  Scr.Pos.y = Scr.Siz.y * ( 0.5 - ( Pix.Pos.y + 0.5 ) / Pix.Siz.y );
   Scr.Pos.z = -2;
+
 
   Cam.Mov = Camera[0];  // カメラの姿勢
 
