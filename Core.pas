@@ -12,12 +12,19 @@ type //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
      TParticle = record
        Mov :TSingleM4;
+       R   :UInt8;
+       G   :UInt8;
+       B   :UInt8;
+       A   :UInt8;
      end;
 
      //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TPoinPCD
 
      TPoinPCD = record
-       RGB :UInt32;
+       R   :UInt8;
+       G   :UInt8;
+       B   :UInt8;
+       A   :UInt8;
        Pos :TSingle3D;
        _1  :Byte;
        _2  :Byte;
@@ -103,6 +110,9 @@ begin
                                      * TSingleM4.Translate( 5*X, 5*Y, 5*Z )
                                      * TSingleM4.Translate( 0.75, -0.3, 1.5 )
                                      * TSingleM4.Scale( 0.05, 0.05, 0.05 );
+          A.R := Ps[ I ].R;
+          A.G := Ps[ I ].G;
+          A.B := Ps[ I ].B;
 
           Form1._Particles.Data[ I ] :=  A;
      end;

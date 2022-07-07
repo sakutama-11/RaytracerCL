@@ -68,6 +68,7 @@ bool MatWater( TRay*  const Ray,
   if ( Rand( See ) < F ) Ray->Vec = Reflect( Ray->Vec, Nor             );  // 反射
                     else Ray->Vec = Refract( Ray->Vec, Nor, IOR0, IOR1 );  // 屈折
 
+
   return true;
 }
 
@@ -75,7 +76,8 @@ bool MatWater( TRay*  const Ray,
 
 bool MatDiffu( TRay*  const Ray,
                const  THit* Hit,
-               uint4* const See )
+               uint4* const See,
+               uint Col )
 {
   Ray->Pos = Hit->Pos;
 
@@ -87,8 +89,27 @@ bool MatDiffu( TRay*  const Ray,
   Ray->Vec.x = d * cos( Pi2 * v );
   Ray->Vec.z = d * sin( Pi2 * v );
 
+  float r = (float) (Col / (uint) 16777216) / 256.f;
+  float g = (float) ((Col % (uint) 16777216) / (uint)65536) / 256.f;
+  float b = (float) ((Col % (uint) 65536) / (uint)256) / 256.f;
+  float a = (float) (Col % (uint) 256) / 256.f;
+  Ray->Rad = (float3) (r, g, b);
+  // Ray->Rad = (float3) (1.f, 0, 0);
   return true;
 }
 
+// //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MatDiffuSphere
+// // 球体の色
+
+// bool MatDiffuSphere( TRay*  const     Ray,
+//                const  THit*     Hit,
+//                uint4* const     See,
+//                global TPoint* Spheres,
+//                const  int i )
+// {
+//   Ray->Rad += read_imagef( Tex, Sam, VecToSky( Ray->Vec ) ).xyz;  // 輝度を加算
+
+//   return false;  // レイトレーシングの中断
+// }
 //############################################################################## ■
 #endif
