@@ -15,7 +15,7 @@
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% CheckHit
 
-void CheckHit( THit* const Hit,
+bool CheckHit( THit* const Hit,
                const TTap* Tap,
                const int   Mat )
 {
@@ -25,7 +25,9 @@ void CheckHit( THit* const Hit,
     Hit->Pos = Tap->Pos;
     Hit->Nor = Tap->Nor;
     Hit->Mat =      Mat;
+    return true;
   }
+  return false;
 }
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Raytrace
@@ -34,7 +36,7 @@ void Raytrace( TRay*  const     Ray,
                uint4* const     See,
                const  image2d_t Tex,
                const  sampler_t Sam,
-               global TShaper*  Shapers )
+               global TPoint*  Shapers )
 {
   THit Hit;
   TTap Tap;
@@ -51,12 +53,16 @@ void Raytrace( TRay*  const     Ray,
 
     // if ( ObjPlane( Ray, &Tap ) ) CheckHit( &Hit, &Tap, 3 );  // 地面とレイの交差判定
 
-    // for ( int i = 0; i < 1109; i++ )
-    // {
-    //   if ( ObjSpher( Ray, &Tap, Shapers[ i ].Mov ) ) CheckHit( &Hit, &Tap, 3 );  // 球体とレイの交差判定
-    // }
+    uint Col = 0;
+    for ( int i = 0; i < 1109; i++ )
+    {
+      if ( ObjSpher( Ray, &Tap, Shapers[ i ].Mov ) )
+      {
+        if (CheckHit( &Hit, &Tap, 3 )) Col = Shapers[ i ].Col;  // 球体とレイの交差判定
+      }
+    }
 
-    if (ObjField( Ray, &Tap, Shapers)) CheckHit( &Hit, &Tap, 2 );
+    // if (ObjField( Ray, &Tap, Shapers)) CheckHit( &Hit, &Tap, 2 );
 
     ///// 材質
 
@@ -65,7 +71,7 @@ void Raytrace( TRay*  const     Ray,
       case 0: Emi = MatSkyer( Ray, &Hit, See, Tex, Sam ); break;  // 空
       case 1: Emi = MatMirro( Ray, &Hit, See           ); break;  // 鏡面
       case 2: Emi = MatWater( Ray, &Hit, See           ); break;  // 水面
-      case 3: Emi = MatDiffu( Ray, &Hit, See           ); break;  // 地面
+      case 3: Emi = MatDiffu( Ray, &Hit, See, Col      ); break;  // 地面
     }
 
     if ( !Emi ) break;  // 放射しなければ終了
@@ -84,7 +90,7 @@ kernel void Render( write_only image2d_t  Imager ,
                     global     TSingleM4* Camera ,
                     read_only  image2d_t  Textur ,
                     const      sampler_t  Samplr ,
-                    global     TShaper*   Shapers )
+                    global     TPoint*   Shapers )
 {
   TPix Pix;
   TEye Eye;

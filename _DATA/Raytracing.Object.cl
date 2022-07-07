@@ -14,11 +14,6 @@
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ObjPlain
 // 地面
 
-
-// const int MAX_MARCHING_STEPS = 16;
-// const float EPSILON = 0.001;
-// const float MAX_DIST =      999999.f;
-
 bool ObjPlane( const TRay* Ray,
                TTap* const Tap )
 {
@@ -97,15 +92,15 @@ float Smin( float a, float b, float k )
 /**
  * Signed distance function describing the scene.
  */
-float SceneSDF(float3 samplePoint, global TShaper* spheres) {
-  float ballRadius = 0.7f;
+float SceneSDF(float3 samplePoint, global TPoint* spheres) {
   float Result = MAXFLOAT;
 
   for (int i = 1; i < 1109; i ++) {
       TSingleM4 M = spheres[ i ].Mov;
-      float3    C = (float3)( M._14, M._24, M._34 );
-      float     R = M._11;
-      float D = SphereSDF( samplePoint, C, R );
+      float3    center = (float3)( M._14, M._24, M._34 );
+      float     ballRadius = M._11;
+      ballRadius = 0.01f;
+      float D = SphereSDF( samplePoint, center, ballRadius );
       Result = Smin(Result, D, 0.1f);
   }
 
@@ -116,7 +111,7 @@ float SceneSDF(float3 samplePoint, global TShaper* spheres) {
 
 //------------------------------------------------------------------------------
 
-float3 GetNor( const float3 P, global TShaper* spheres )
+float3 GetNor( const float3 P, global TPoint* spheres )
 {
   const float3 Xd = { FLOAT_EPS2, 0, 0 };
   const float3 Yd = { 0, FLOAT_EPS2, 0 };
@@ -136,7 +131,7 @@ float3 GetNor( const float3 P, global TShaper* spheres )
 
 bool ObjField( const TRay* Ray,
                TTap* const Tap,
-               global TShaper* Spheres
+               global TPoint* Spheres
                )
 {
   Tap->Dis = 0;
